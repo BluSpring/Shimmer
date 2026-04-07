@@ -1,5 +1,16 @@
 package com.lowdragmc.shimmer.client.light;
 
+import java.io.IOException;
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import com.google.common.collect.Maps;
 import com.lowdragmc.shimmer.Configuration;
 import com.lowdragmc.shimmer.FileUtility;
@@ -13,6 +24,12 @@ import com.lowdragmc.shimmer.core.mixins.MixinPluginShared;
 import com.lowdragmc.shimmer.event.ShimmerReloadEvent;
 import com.lowdragmc.shimmer.platform.Services;
 import it.unimi.dsi.fastutil.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL30;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
@@ -32,17 +49,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL30;
-
-import java.io.IOException;
-import java.nio.FloatBuffer;
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * @author KilaBash
@@ -85,12 +91,12 @@ public enum LightManager {
 
     private static String EntityInjectionLightMapColor(String s) {
         s = s.replace("void main()", getShimmerImport() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'), "lightMapColor = color_light(IViewRotMat * Position, lightMapColor);\n").toString();
+        return new StringBuffer(s).insert(s.lastIndexOf('}'), "lightMapColor = color_light(Position, lightMapColor);\n").toString();
     }
 
     private static String EntityInjectionVertexColor(String s) {
         s = s.replace("void main()", getShimmerImport() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'), "vertexColor = color_light(IViewRotMat * Position, vertexColor);\n").toString();
+        return new StringBuffer(s).insert(s.lastIndexOf('}'), "vertexColor = color_light(Position, vertexColor);\n").toString();
     }
 
     private static String lightShader;
@@ -111,29 +117,14 @@ public enum LightManager {
         return lightShader;
     }
 
-    public static String RbVVSHInjection(String s) {
+    public static String SodiumVVSHInjection(String s) {
         s = new StringBuffer(s).insert(s.lastIndexOf("out vec2 v_TexCoord;"), """
                  out float isBloom;
                  """).toString();
         s = new StringBuffer(s).insert(s.lastIndexOf("void main()"), getLightShader()).toString();
+        // FIXME: lightmap is meant to be this: v_Color = color_light_uv(position, v_Color, ivec2(_vert_tex_light_coord) * 16 ).rgba;
         s = new StringBuffer(s).insert(s.lastIndexOf('}'), Services.PLATFORM.useLightMap() ? """
-                    v_ColorModulator = color_light_uv(position, vec4(v_ColorModulator, 1.0), ivec2(_vert_light) * 16 ).rgb;
-                """ : """
-                    v_ColorModulator = color_light(position, vec4(v_ColorModulator,1.0)  * 16).rgb;
-                """).toString();
-        s = new StringBuffer(s).insert(s.lastIndexOf("}"), """
-                isBloom = ((_vert_material >> 4u) & 0x01u) > 0u ? 256.0 : 0.0;
-                """).toString();
-        return s;
-    }
-
-    public static String embeddiumVVSHInjection(String s) {
-        s = new StringBuffer(s).insert(s.lastIndexOf("out vec2 v_TexCoord;"), """
-                 out float isBloom;
-                 """).toString();
-        s = new StringBuffer(s).insert(s.lastIndexOf("void main()"), getLightShader()).toString();
-        s = new StringBuffer(s).insert(s.lastIndexOf('}'), Services.PLATFORM.useLightMap() ? """
-                    v_Color = color_light_uv(position, v_Color, ivec2(_vert_tex_light_coord) * 16 ).rgba;
+                    v_Color = color_light(position, v_Color).rgba;
                 """ : """
                     v_Color = color_light(position, v_Color * 16).rgba;
                 """).toString();
@@ -143,7 +134,7 @@ public enum LightManager {
         return s;
     }
 
-    public void bindRbProgram(int programID) {
+    public void bindProgramId(int programID) {
         lightUBO.bindToShader(programID, "Lights");
         envUBO.bindToShader(programID, "Env");
     }
@@ -248,7 +239,7 @@ public enum LightManager {
         Vec3 localPlayerPosition = localPlayer.position();
         if (Minecraft.getInstance().level == null) return;
         List<AbstractClientPlayer> players = Minecraft.getInstance().level.players();
-        float partialTicks = Minecraft.getInstance().getFrameTime();
+        float partialTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
         for (AbstractClientPlayer player : players) {
             Vec3 position = player.getPosition(partialTicks);
             if (player == localPlayer || position.distanceToSqr(localPlayerPosition) < 32 * 32){
@@ -342,8 +333,7 @@ public enum LightManager {
         GameRenderer gameRenderer = Minecraft.getInstance().gameRenderer;
         ShaderInstance instance = gameRenderer.getShader(shaderName);
         if (instance != null) {
-            lightUBO.bindToShader(instance.getId(), "Lights");
-            envUBO.bindToShader(instance.getId(), "Env");
+            bindProgramId(instance.getId());
         }
     }
 
@@ -499,11 +489,12 @@ public enum LightManager {
 			for (var  itemLight : config.itemLights){
 				var template = new ColorPointLight.Template(itemLight.radius, itemLight.color());
 				if (itemLight.itemName != null){
-					if (!ResourceLocation.isValidResourceLocation(itemLight.itemName)){
+                    var itemLocation = ResourceLocation.tryParse(itemLight.itemName);
+					if (itemLocation == null){
 						ShimmerConstants.LOGGER.error("invalid item name " + itemLight.itemName + " form" + config.configSource);
 						continue;
 					}
-					var itemLocation = new ResourceLocation(itemLight.itemName);
+
 					if (!BuiltInRegistries.ITEM.containsKey(itemLocation)){
 						ShimmerConstants.LOGGER.error("can't find item " + itemLocation + " from" + config.configSource);
 						continue;
@@ -511,11 +502,12 @@ public enum LightManager {
 					var item = BuiltInRegistries.ITEM.get(itemLocation);
 					registerItemLight(item, itemStack -> template);
 				}else {
-					if (!ResourceLocation.isValidResourceLocation(itemLight.itemTag)){
+                    var tagLocation = ResourceLocation.tryParse(itemLight.itemTag);
+					if (tagLocation == null){
 						ShimmerConstants.LOGGER.error("invalid item tag name " + itemLight.itemTag + " form" + config.configSource);
 						continue;
 					}
-					registerTagLight(new ResourceLocation(itemLight.itemTag),itemStack -> template);
+					registerTagLight(tagLocation,itemStack -> template);
 				}
 			}
 		}

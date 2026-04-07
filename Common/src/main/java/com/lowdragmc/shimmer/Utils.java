@@ -1,16 +1,5 @@
 package com.lowdragmc.shimmer;
 
-import com.lowdragmc.shimmer.platform.Services;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateHolder;
-import net.minecraft.world.level.block.state.properties.Property;
-import org.apache.http.util.Asserts;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,12 +8,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.lowdragmc.shimmer.platform.Services;
+import org.apache.http.util.Asserts;
+import org.jetbrains.annotations.NotNull;
+
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateHolder;
+import net.minecraft.world.level.block.state.properties.Property;
+
 /**
  * @author KilaBash
  * @date 2022/6/21
  * @implNote Utils
  */
 public class Utils {
+	public static int postTextureId = -1;
 
     public static <S extends StateHolder<?, S>, T extends Comparable<T>> S setValueHelper(S state, Property<T> property, String value) {
         Optional<T> optionalT = property.getValue(value);

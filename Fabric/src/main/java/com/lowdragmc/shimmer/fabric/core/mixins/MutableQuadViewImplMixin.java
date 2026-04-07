@@ -2,15 +2,17 @@ package com.lowdragmc.shimmer.fabric.core.mixins;
 
 import com.lowdragmc.shimmer.client.postprocessing.PostProcessing;
 import com.lowdragmc.shimmer.core.IBakedQuad;
-import com.lowdragmc.shimmer.fabric.core.IQuadViewImpl;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.core.Direction;
+import com.lowdragmc.shimmer.core.IQuadViewImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
 
 /**
  * @author KilaBash

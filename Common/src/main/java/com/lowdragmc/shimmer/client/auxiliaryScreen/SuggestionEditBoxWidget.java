@@ -1,5 +1,15 @@
 package com.lowdragmc.shimmer.client.auxiliaryScreen;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import org.lwjgl.glfw.GLFW;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -7,11 +17,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.lwjgl.glfw.GLFW;
-
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 /**
  * the text input widget with suggestion and completion support
@@ -63,40 +68,35 @@ public class SuggestionEditBoxWidget extends EditBox {
 		candidateListeners.add(consumer);
 	}
 
-	/**
-	 * update is complete and call callbacks
-	 */
-	@Override
 	public void tick() {
-		super.tick();
 		var last = isComplete;
 		//check complete change
-		if (ResourceLocation.isValidResourceLocation(this.getValue())) {
-			ResourceLocation resourceLocation = new ResourceLocation(this.getValue());
-			isComplete = allSuggestion.contains(resourceLocation);
+		ResourceLocation valueRl = ResourceLocation.tryParse(this.getValue());
+		if (valueRl != null) {
+			isComplete = allSuggestion.contains(valueRl);
 			if (!last && isComplete) {
-				completeListeners.forEach(item -> item.accept(type, resourceLocation));
+				completeListeners.forEach(item -> item.accept(type, valueRl));
 			}
 		} else {
 			isComplete = false;
 		}
+
 		//check candidate change
 		if (!Objects.equals(candidate, lastCandidate)) {
 			lastCandidate = candidate;
-			if (lastCandidate != null && ResourceLocation.isValidResourceLocation(lastCandidate)) {
-				ResourceLocation resourceLocation = new ResourceLocation(lastCandidate);
-				if (allSuggestion.contains(resourceLocation)) {
+			if (lastCandidate != null) {
+				ResourceLocation resourceLocation = ResourceLocation.tryParse(lastCandidate);
+				if (resourceLocation != null && allSuggestion.contains(resourceLocation)) {
 					candidateListeners.forEach(item -> item.accept(type, resourceLocation));
 				}
 			}
 		}
-
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		//render current by super
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
 
 		//check if suggestion need render
 		if (suggestions != null && suggestions.contains(this.getValue())) return;

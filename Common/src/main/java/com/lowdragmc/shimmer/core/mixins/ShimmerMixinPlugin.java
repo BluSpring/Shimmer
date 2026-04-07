@@ -1,12 +1,12 @@
 package com.lowdragmc.shimmer.core.mixins;
 
+import java.util.List;
+import java.util.Set;
+
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author HypherionSA
@@ -37,6 +37,12 @@ public class ShimmerMixinPlugin implements IMixinConfigPlugin , MixinPluginShare
         }
         if (IS_DASH_LOADER && mixinClassName.contains("reloadShader")){
             return false;
+        }
+        if (mixinClassName.contains(".sodium")) {
+            return IS_SODIUM_LOAD;
+        }
+        if (mixinClassName.contains(".iris")) {
+            return IS_IRIS_LOAD;
         }
         return true;
     }

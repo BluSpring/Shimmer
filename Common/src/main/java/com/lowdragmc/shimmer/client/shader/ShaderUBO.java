@@ -1,9 +1,8 @@
 package com.lowdragmc.shimmer.client.shader;
 
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL31;
-
 import java.nio.FloatBuffer;
+
+import org.lwjgl.opengl.GL32C;
 
 /**
  * @author KilaBash
@@ -16,64 +15,68 @@ public class ShaderUBO {
     private int blockBinding = -1;
 
     public ShaderUBO() {
-        id = GL30.glGenBuffers();
+        id = GL32C.glGenBuffers();
     }
 
     private void close() {
         if(!inValid) {
-            GL30.glDeleteBuffers(id);
+            GL32C.glDeleteBuffers(id);
             inValid = true;
         }
     }
 
     public void bindBuffer() {
-        GL30.glBindBuffer(GL31.GL_UNIFORM_BUFFER, id);
+        GL32C.glBindBuffer(GL32C.GL_UNIFORM_BUFFER, id);
     }
 
     public void unBindBuffer() {
-        GL30.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
+        GL32C.glBindBuffer(GL32C.GL_UNIFORM_BUFFER, 0);
     }
 
     public void createBufferData(long size, int mode) {
         bindBuffer();
-        GL30.glBufferData(GL31.GL_UNIFORM_BUFFER, size, mode);
+        GL32C.glBufferData(GL32C.GL_UNIFORM_BUFFER, size, mode);
         unBindBuffer();
     }
 
     public void createBufferData(FloatBuffer data, int mode) {
         bindBuffer();
-        GL30.glBufferData(GL31.GL_UNIFORM_BUFFER, data, mode);
+        GL32C.glBufferData(GL32C.GL_UNIFORM_BUFFER, data, mode);
         unBindBuffer();
     }
 
     public void bufferSubData(long offset, FloatBuffer data) {
         bindBuffer();
-        GL30.glBufferSubData(GL31.GL_UNIFORM_BUFFER, offset, data);
+        GL32C.glBufferSubData(GL32C.GL_UNIFORM_BUFFER, offset, data);
         unBindBuffer();
     }
 
     public void bufferSubData(long offset, float[] data) {
         bindBuffer();
-        GL30.glBufferSubData(GL31.GL_UNIFORM_BUFFER, offset, data);
+        GL32C.glBufferSubData(GL32C.GL_UNIFORM_BUFFER, offset, data);
         unBindBuffer();
     }
 
     public void bufferSubData(long offset, int[] data) {
         bindBuffer();
-        GL30.glBufferSubData(GL31.GL_UNIFORM_BUFFER, offset, data);
+        GL32C.glBufferSubData(GL32C.GL_UNIFORM_BUFFER, offset, data);
         unBindBuffer();
     }
 
     public void blockBinding(int blockBinding) {
         this.blockBinding = blockBinding;
         if (blockBinding > -1) {
-            GL31.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockBinding, id);
+            GL32C.glBindBufferBase(GL32C.GL_UNIFORM_BUFFER, blockBinding, id);
         }
     }
 
     public void bindToShader(int program, String bufBlockName) {
         if (blockBinding > -1) {
-            GL31.glUniformBlockBinding(program, GL31.glGetUniformBlockIndex(program, bufBlockName), blockBinding);
+            int blockIndex = GL32C.glGetUniformBlockIndex(program, bufBlockName);
+
+            if (blockIndex > -1) {
+                GL32C.glUniformBlockBinding(program, blockIndex, blockBinding);
+            }
         }
     }
 

@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.lowdragmc.shimmer.fabric.core.mixins",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "plugin": "com.lowdragmc.shimmer.fabric.core.mixins.ShimmerFabricMixinPlugin",
   "client": [
     "BakedQuadMixin",
@@ -15,27 +15,7 @@
     "ResourceLocationMixin",
     "ShaderInstanceAccessor",
     "ShaderInstanceMixin",
-    "flywheel.LevelRenderMixin",
-    "iris.ExtendedShaderMixin",
-    "iris.GlFrameBufferMixin",
-    "iris.GlResourceAccessor",
-    "iris.HeldItemSupplierMixin",
-    "iris.IrisChunkProgramOverridesMixin",
-    "iris.NewWorldRenderingPipelineMixin",
-    "iris.RenderTargetsMixin",
-    "iris.ShaderPropertiesMixin",
-    "iris.ShaderStorageBufferAccessor",
-    "iris.ShaderStorageBufferHolderMixin",
-    "iris.StandardMacrosMixin",
-    "sodium.BlockRendererMixin",
-    "sodium.ChunkBuilderMeshingTaskMixin",
-    "sodium.CompactChunkVertexMixin",
-    "sodium.FluidRendererMixin",
-    "sodium.RenderSectionManagerAccessor",
-    "sodium.RenderSectionMixin",
-    "sodium.ShaderChunkRendererMixin",
-    "sodium.ShaderLoaderMixin",
-    "sodium.SodiumWorldRendererMixin"
+    "flywheel.LevelRenderMixin"
   ],
   "server": [
   ],
@@ -43,6 +23,5 @@
     "defaultRequire": 1
   },
   "mixins": [
-    "iris.ProgramSetMixin"
   ]
 }

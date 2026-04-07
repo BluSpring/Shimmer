@@ -1,23 +1,29 @@
 package com.lowdragmc.shimmer.client.shader;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+
 import com.lowdragmc.shimmer.ShimmerConstants;
 import com.lowdragmc.shimmer.comp.iris.IrisHandle;
 import com.lowdragmc.shimmer.core.mixins.MixinPluginShared;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.datafixers.util.Pair;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL46;
+import org.lwjgl.opengl.KHRDebug;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.GL46;
-
-import java.io.IOException;
-import java.util.function.Consumer;
 
 /**
  * @author KilaBash
@@ -49,13 +55,12 @@ public class RenderUtils {
         RenderSystem.defaultBlendFunc();
 
         Tesselator tesselator = RenderSystem.renderThreadTesselator();
-        BufferBuilder bufferbuilder = tesselator.getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        bufferbuilder.vertex(-1, 1, 0).endVertex();
-        bufferbuilder.vertex(-1, -1, 0).endVertex();
-        bufferbuilder.vertex(1, -1, 0).endVertex();
-        bufferbuilder.vertex(1, 1, 0).endVertex();
-        BufferUploader.draw(bufferbuilder.end());
+        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        bufferbuilder.addVertex(-1, 1, 0);
+        bufferbuilder.addVertex(-1, -1, 0);
+        bufferbuilder.addVertex(1, -1, 0);
+        bufferbuilder.addVertex(1, 1, 0);
+        BufferUploader.draw(bufferbuilder.buildOrThrow());
         blitShader.clear();
 
         GlStateManager._depthMask(true);
@@ -72,7 +77,7 @@ public class RenderUtils {
 
     public static Pair<ShaderInstance, Consumer<ShaderInstance>> registerShaders(ResourceManager resourceManager) {
         try {
-            return Pair.of(ReloadShaderManager.backupNewShaderInstance(resourceManager, new ResourceLocation(ShimmerConstants.MOD_ID, "fast_blit").toString(), DefaultVertexFormat.POSITION), shaderInstance -> {
+            return Pair.of(ReloadShaderManager.backupNewShaderInstance(resourceManager, ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "fast_blit").toString(), DefaultVertexFormat.POSITION), shaderInstance -> {
                 blitShader = shaderInstance;
             });
         } catch (IOException e) {
@@ -84,9 +89,9 @@ public class RenderUtils {
 
     public static void warpGLDebugLabel(String message, Runnable block) {
         if (DEBUG_LABEL_AVAILABLE && ShimmerConstants.useOpenGlDebugLabel) {
-            GL43.glPushDebugGroup(GL43.GL_DEBUG_SOURCE_APPLICATION, 0, message);
+            KHRDebug.glPushDebugGroup(KHRDebug.GL_DEBUG_SOURCE_APPLICATION, 0, message);
             block.run();
-            GL43.glPopDebugGroup();
+            KHRDebug.glPopDebugGroup();
         } else {
             block.run();
         }

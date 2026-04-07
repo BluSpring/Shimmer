@@ -1,5 +1,15 @@
 package com.lowdragmc.shimmer.client.postprocessing;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -22,6 +32,9 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.shaders.BlendMode;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
@@ -39,13 +52,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 /**
  * @author KilaBash
@@ -57,13 +63,13 @@ public class PostProcessing implements ResourceManagerReloadListener {
     public static final Set<RenderType> CHUNK_TYPES = Sets.newHashSet(RenderType.solid(), RenderType.cutoutMipped(), RenderType.cutout());
 
     private static final Map<String, PostProcessing> POST_PROCESSING_MAP = new HashMap<>();
-    public static final PostProcessing BLOOM_UNREAL = new PostProcessing("bloom_unreal", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/bloom_unreal.json"));
-    public static final PostProcessing BLOOM_UNITY = new PostProcessing("bloom_unity", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/bloom_unity.json"));
-    public static final PostProcessing WARP = new PostProcessing("warp", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/warp.json"));
-    public static final PostProcessing VHS = new PostProcessing("vhs", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/vhs.json"));
-    public static final PostProcessing FLICKER = new PostProcessing("flicker", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/flicker.json"));
-    public static final PostProcessing HALFTONE = new PostProcessing("halftone", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/halftone.json"));
-    public static final PostProcessing DOT_SCREEN = new PostProcessing("dot_screen", new ResourceLocation(ShimmerConstants.MOD_ID, "shaders/post/dot_screen.json"));
+    public static final PostProcessing BLOOM_UNREAL = new PostProcessing("bloom_unreal", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/bloom_unreal.json"));
+    public static final PostProcessing BLOOM_UNITY = new PostProcessing("bloom_unity", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/bloom_unity.json"));
+    public static final PostProcessing WARP = new PostProcessing("warp", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/warp.json"));
+    public static final PostProcessing VHS = new PostProcessing("vhs", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/vhs.json"));
+    public static final PostProcessing FLICKER = new PostProcessing("flicker", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/flicker.json"));
+    public static final PostProcessing HALFTONE = new PostProcessing("halftone", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/halftone.json"));
+    public static final PostProcessing DOT_SCREEN = new PostProcessing("dot_screen", ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "shaders/post/dot_screen.json"));
 
     public static AtomicBoolean enableBloomFilter = new AtomicBoolean(false);
     private static final Minecraft mc = Minecraft.getInstance();
@@ -157,24 +163,7 @@ public class PostProcessing implements ResourceManagerReloadListener {
         return s;
     }
 
-    public static String RbBloomMRTFSHInjection(String s) {
-        s = new StringBuffer(s).insert(s.lastIndexOf("in vec3 v_ColorModulator;"), """
-                        in float isBloom;
-                        """).toString();
-        s = new StringBuffer(s).insert(s.lastIndexOf("void main()"), """
-                        out vec4 bloomColor;
-                        """).toString();
-        s = new StringBuffer(s).insert(s.lastIndexOf('}'), """
-                    if (isBloom > 255.) {
-                        bloomColor = out_FragColor * smoothstep(u_FogEnd,u_FogStart,v_FragDistance);
-                    } else {
-                        bloomColor = vec4(0.);
-                    }
-                """).toString();
-        return s;
-    }
-
-    public static String embeddiumBloomMRTFSHInjection(String s) {
+    public static String SodiumBloomMRTFSHInjection(String s) {
         s = new StringBuffer(s).insert(s.lastIndexOf("in vec4 v_Color;"), """
                         in float isBloom;
                         """).toString();
@@ -243,7 +232,7 @@ public class PostProcessing implements ResourceManagerReloadListener {
         BlendMode lastBlendMode = BlendModeMixin.getLastApplied();
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
-        postChain.process(mc.getFrameTime());
+        postChain.process(mc.getTimer().getGameTimeDeltaPartialTick(true));
         RenderUtils.fastBlit(postChain.getTempTarget("shimmer:output"), output);
         BlendModeMixin.setLastApplied(lastBlendMode);
     }
@@ -487,11 +476,11 @@ public class PostProcessing implements ResourceManagerReloadListener {
 		for (var config : Configuration.configs){
 			for (var bloom : config.blooms){
 				if (bloom.particleName != null) {
-					if (!ResourceLocation.isValidResourceLocation(bloom.particleName)){
+                    var particleLocation = ResourceLocation.tryParse(bloom.particleName);
+					if (particleLocation == null){
 						ShimmerConstants.LOGGER.error("invalid particle name " + bloom.particleName + " form" + config.configSource);
 						continue;
 					}
-					var particleLocation = new ResourceLocation(bloom.particleName);
 					BLOOM_PARTICLE.add(particleLocation);
 				}else if (bloom.fluidName != null){
 					Pair<ResourceLocation, Fluid> fluid = bloom.fluid();

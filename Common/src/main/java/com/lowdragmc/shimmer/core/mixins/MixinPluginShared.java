@@ -1,9 +1,9 @@
 package com.lowdragmc.shimmer.core.mixins;
 
-import com.lowdragmc.shimmer.ShimmerConstants;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
+
+import com.lowdragmc.shimmer.ShimmerConstants;
 
 public interface MixinPluginShared {
 
@@ -23,7 +23,7 @@ public interface MixinPluginShared {
 			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 			//knot class loader's name is null
 			if (Objects.equals(classLoader.getName(),"TRANSFORMER")) {
-				//under forge's TransformingClassLoader
+				//under neoforge's TransformingClassLoader
 				try {
 					//try not to load the class
 					var fmlLoaderClass = Class.forName("net.minecraftforge.fml.loading.FMLLoader");
@@ -55,10 +55,8 @@ public interface MixinPluginShared {
 	boolean IS_OPT_LOAD = doUnderOptifine(isClassFound("optifine.OptiFineTranformationService") || checkOptifine());
 	boolean IS_DASH_LOADER = isClassFound("dev.quantumfusion.dashloader.mixin.MixinPlugin");
 
-	boolean IS_SODIUM_LOAD = isClassFound("me.jellysquid.mods.sodium.mixin.SodiumMixinPlugin");
-	boolean IS_RUBIDIUM_LOAD = IS_SODIUM_LOAD;
+	boolean IS_SODIUM_LOAD = isClassFound("net.caffeinemc.mods.sodium.mixin.SodiumMixinPlugin");
 
-	boolean IS_IRIS_LOAD = isClassFound("net.coderbot.iris.compat.sodium.mixin.IrisSodiumCompatMixinPlugin");
-	boolean IS_OCULUS_LOAD = IS_IRIS_LOAD;
+	boolean IS_IRIS_LOAD = isClassFound("net.irisshaders.iris.mixin.IrisMixinPlugin");
 
 }

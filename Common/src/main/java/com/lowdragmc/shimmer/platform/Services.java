@@ -15,7 +15,7 @@ public class Services {
     private static IPlatformHelper load() {
         String loaderName = ClientBrandRetriever.getClientModName().toLowerCase().trim();
         var classLocation = switch (loaderName) {
-            case "forge" -> "com.lowdragmc.shimmer.forge.platform.ForgePlatformHelper";
+            case "neoforge" -> "com.lowdragmc.shimmer.neoforge.platform.ForgePlatformHelper";
             case "fabric" -> "com.lowdragmc.shimmer.fabric.platform.FabricPlatformHelper";
             case "quilt" -> {
                 ShimmerConstants.LOGGER.warn("quilt detected, just work under fabric");

@@ -1,11 +1,12 @@
 package com.lowdragmc.shimmer.core.mixins;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.lowdragmc.shimmer.core.IMainTarget;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -16,12 +17,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(RenderTarget.class)
 public abstract class RenderTargetMixin {
 
-    @Redirect(method = "createBuffers",
+    @WrapOperation(method = "createBuffers",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;setFilterMode(I)V"))
-    private void injectCreateBuffers(RenderTarget instance, int pFilterMode) {
-        instance.setFilterMode(instance.filterMode == 0 ? pFilterMode : instance.filterMode);
+                    target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;setFilterMode(IZ)V"))
+    private void injectCreateBuffers(RenderTarget instance, int filterMode, boolean force, Operation<Void> original) {
+        if (!force)
+            original.call(instance, instance.filterMode == 0 ? filterMode : instance.filterMode, force);
+        else original.call(instance, filterMode, force);
     }
 
     @Inject(method = "destroyBuffers", at = @At("TAIL"))
@@ -31,8 +34,8 @@ public abstract class RenderTargetMixin {
         }
     }
 
-    @Inject(method = "setFilterMode", at = @At("TAIL"))
-    private void injectSetFilterMode(int $$0, CallbackInfo ci) {
+    @Inject(method = "setFilterMode(IZ)V", at = @At("TAIL"))
+    private void injectSetFilterMode(int $$0, boolean force, CallbackInfo ci) {
         if (this instanceof IMainTarget mainTarget) {
             mainTarget.setBloomFilterMode($$0);
         }

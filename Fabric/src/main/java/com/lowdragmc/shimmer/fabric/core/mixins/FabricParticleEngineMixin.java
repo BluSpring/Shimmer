@@ -1,14 +1,25 @@
 package com.lowdragmc.shimmer.fabric.core.mixins;
 
+import java.util.Map;
+import java.util.Queue;
+
+import com.lowdragmc.shimmer.Utils;
 import com.lowdragmc.shimmer.client.postprocessing.IPostParticleType;
 import com.lowdragmc.shimmer.client.postprocessing.PostProcessing;
 import com.lowdragmc.shimmer.client.shader.RenderUtils;
 import com.lowdragmc.shimmer.comp.iris.IrisHandle;
-import com.lowdragmc.shimmer.fabric.ShimmerMod;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -19,17 +30,7 @@ import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureManager;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.Map;
-import java.util.Queue;
 
 @Mixin(ParticleEngine.class)
 public abstract class FabricParticleEngineMixin {
@@ -43,8 +44,8 @@ public abstract class FabricParticleEngineMixin {
 	private TextureManager textureManager;
 
 	@Inject(method = "render",
-			at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V", shift = At.Shift.BEFORE))
-	private void renderPostParticles(PoseStack matrixStack, MultiBufferSource.BufferSource buffer, LightTexture lightTexture, Camera activeRenderInfo, float partialTicks, CallbackInfo ci) {
+			at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;depthMask(Z)V", shift = At.Shift.BEFORE))
+	private void renderPostParticles(LightTexture lightTexture, Camera camera, float partialTick, CallbackInfo ci) {
 		for (IPostParticleType particleRenderType : PostProcessing.getBlockBloomPostParticleTypes()) {
 			RenderUtils.warpGLDebugLabel(particleRenderType.toString(), () -> {
 				Iterable<Particle> iterable = this.particles.get(particleRenderType);
@@ -52,12 +53,11 @@ public abstract class FabricParticleEngineMixin {
 					RenderSystem.setShader(GameRenderer::getParticleShader);
 					RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 					Tesselator tesselator = Tesselator.getInstance();
-					BufferBuilder bufferBuilder = tesselator.getBuilder();
-					particleRenderType.begin(bufferBuilder, this.textureManager);
+					BufferBuilder bufferBuilder = particleRenderType.begin(tesselator, this.textureManager);
 
 					PostProcessing postProcessing = particleRenderType.getPost();
 					if (IrisHandle.INSTANCE != null && IrisHandle.INSTANCE.underShaderPack()) {
-						ShimmerMod.postTextureId = postProcessing.getPostTarget(false).getColorTextureId();
+						Utils.postTextureId = postProcessing.getPostTarget(false).getColorTextureId();
 					} else {
 						postProcessing.getPostTarget(false).bindWrite(false);
 					}
@@ -66,7 +66,7 @@ public abstract class FabricParticleEngineMixin {
 
 					for (Particle particle : iterable) {
 						try {
-							particle.render(bufferBuilder, activeRenderInfo, partialTicks);
+							particle.render(bufferBuilder, camera, partialTick);
 						} catch (Throwable throwable) {
 							CrashReport crashReport = CrashReport.forThrowable(throwable, "Rendering Particle");
 							CrashReportCategory crashReportCategory = crashReport.addCategory("Particle being rendered");
@@ -75,11 +75,14 @@ public abstract class FabricParticleEngineMixin {
 							throw new ReportedException(crashReport);
 						}
 					}
-					particleRenderType.end(tesselator);
+					MeshData built = bufferBuilder.build();
+
+					if (built != null)
+						BufferUploader.drawWithShader(built);
 
 					Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
 
-					ShimmerMod.postTextureId = -1;
+					Utils.postTextureId = -1;
 				}
 			});
 		}

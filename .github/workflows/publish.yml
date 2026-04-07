@@ -34,7 +34,7 @@ on:
         type: boolean
         default: true
       forge:
-        description: "forge"
+        description: "neoforge"
         type: boolean
         default: true
       fabric:

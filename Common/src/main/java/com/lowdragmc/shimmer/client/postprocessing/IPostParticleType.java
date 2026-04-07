@@ -2,9 +2,10 @@ package com.lowdragmc.shimmer.client.postprocessing;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.Tesselator;
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.texture.TextureManager;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author KilaBash
@@ -17,12 +18,7 @@ public interface IPostParticleType extends ParticleRenderType {
     PostProcessing getPost();
 
     @Override
-    default void begin(@NotNull BufferBuilder pBuilder, @NotNull TextureManager pTextureManager) {
-        getParent().begin(pBuilder, pTextureManager);
-    }
-
-    @Override
-    default void end(@NotNull Tesselator pTesselator) {
-        getParent().end(pTesselator);
+    default @Nullable BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
+        return getParent().begin(tesselator, textureManager);
     }
 }

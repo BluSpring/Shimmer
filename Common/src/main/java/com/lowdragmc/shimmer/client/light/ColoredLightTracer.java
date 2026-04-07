@@ -1,20 +1,22 @@
 package com.lowdragmc.shimmer.client.light;
 
+import java.nio.FloatBuffer;
+
 import com.lowdragmc.shimmer.client.shader.ShaderUBO;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import org.lwjgl.opengl.GL46;
+import org.lwjgl.system.MemoryUtil;
+
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.lwjgl.opengl.GL46;
-import org.lwjgl.system.MemoryUtil;
-
-import java.nio.FloatBuffer;
 
 public class ColoredLightTracer {
 
@@ -32,11 +34,10 @@ public class ColoredLightTracer {
         profiler.push("render_colored_light");
 
         var tesselator = Tesselator.getInstance();
-        var builder = tesselator.getBuilder();
+        var builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
         var camPos = camera.getPosition();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.enableBlend();
-        builder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
         poseStack.pushPose();
         poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
 
@@ -54,7 +55,7 @@ public class ColoredLightTracer {
                     x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET,
                     1.0f, 1.0f, 1.0f, 0.3f);
         }
-        tesselator.end();
+        BufferUploader.drawWithShader(builder.buildOrThrow());
 
         poseStack.popPose();
 

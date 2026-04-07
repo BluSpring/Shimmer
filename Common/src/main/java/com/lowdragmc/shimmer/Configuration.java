@@ -1,5 +1,16 @@
 package com.lowdragmc.shimmer;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -8,17 +19,11 @@ import com.lowdragmc.shimmer.config.ColorReferencesTypeAdapter;
 import com.lowdragmc.shimmer.config.ShimmerConfig;
 import com.lowdragmc.shimmer.event.ShimmerLoadConfigEvent;
 import com.lowdragmc.shimmer.platform.Services;
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @author KilaBash
@@ -31,7 +36,7 @@ public class Configuration {
 	/**
 	 * config location from mod jar and resource packs
 	 */
-	private static final ResourceLocation configLocation = new ResourceLocation(ShimmerConstants.MOD_ID, configurationFileName);
+	private static final ResourceLocation configLocation = ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, configurationFileName);
 
 	/**
 	 * the Gson object, with pretty print
@@ -82,7 +87,7 @@ public class Configuration {
 			for (var modId : Services.PLATFORM.getLoadedMods()) {
 				if (modId.equals(ShimmerConstants.MOD_ID)) continue;
 				causedSource = " automatic configuration added by mod " + modId;
-				ResourceLocation candidateConfigurationPath = new ResourceLocation(modId, configurationFileName);
+				ResourceLocation candidateConfigurationPath = ResourceLocation.fromNamespaceAndPath(modId, configurationFileName);
 				Optional<String> optionalConfiguration = readConfiguration(candidateConfigurationPath);
 				if (optionalConfiguration.isPresent()) {
 					ShimmerConfig config = gson.fromJson(optionalConfiguration.get(), ShimmerConfig.class);

@@ -1,13 +1,13 @@
 package com.lowdragmc.shimmer.config;
 
+import java.util.Objects;
+
 import com.lowdragmc.shimmer.ShimmerConstants;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.core.Registry;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
-
-import java.util.Objects;
 
 interface FluidChecker extends Check {
 
@@ -16,11 +16,11 @@ interface FluidChecker extends Check {
 	default Pair<ResourceLocation, Fluid> fluid() {
 		var fluidName = getFluidName();
 		Objects.requireNonNull(fluidName);
-		if (!ResourceLocation.isValidResourceLocation(fluidName)) {
+		var fluidLocation = ResourceLocation.tryParse(fluidName);
+		if (fluidLocation == null) {
 			ShimmerConstants.LOGGER.error("invalid fluid name " + fluidName + " form" + getConfigSource());
 			return null;
 		}
-		var fluidLocation = new ResourceLocation(fluidName);
 		if (!BuiltInRegistries.FLUID.containsKey(fluidLocation)) {
 			ShimmerConstants.LOGGER.error("can't find fluid " + fluidLocation + " from" + getConfigSource());
 			return Pair.of(fluidLocation, null);

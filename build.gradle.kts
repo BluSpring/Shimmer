@@ -3,7 +3,7 @@ import net.fabricmc.loom.api.LoomGradleExtensionAPI
 plugins {
     id("architectury-plugin")
     id("dev.architectury.loom").apply(false)
-    id("com.github.johnrengelman.shadow").apply(false)
+    id("com.gradleup.shadow").apply(false)
 }
 
 architectury {
@@ -26,6 +26,7 @@ subprojects {
         }
     }
     repositories {
+        mavenCentral()
         flatDir {
             dir("libs")
         }
@@ -57,10 +58,17 @@ subprojects {
             }
         }
         maven {
-            name = "tterrag maven"
-            url = uri("https://maven.tterrag.com/")
+            name = "Create"
+            url = uri("https://maven.createmod.net")
             content {
-                includeGroup("com.jozufozu.flywheel")
+                includeGroup("dev.engine-room.flywheel")
+            }
+        }
+        maven {
+            name = "Bawnorton"
+            url = uri("https://maven.bawnorton.com/releases")
+            content {
+                includeGroup("com.github.bawnorton.mixinsquared")
             }
         }
     }
@@ -71,8 +79,6 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-$parchment_version@zip")
         })
-        "implementation"(mixinExtras)
-        "annotationProcessor"(mixinExtras)
         "implementation"("org.jetbrains:annotations:24.0.1")
     }
 
@@ -129,7 +135,7 @@ allprojects {
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
-        options.release.set(17)
+        options.release.set(21)
     }
 
     extensions.getByType<JavaPluginExtension>().apply {

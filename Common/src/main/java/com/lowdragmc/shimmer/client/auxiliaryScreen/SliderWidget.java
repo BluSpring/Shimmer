@@ -1,14 +1,15 @@
 package com.lowdragmc.shimmer.client.auxiliaryScreen;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.util.Asserts;
+import org.lwjgl.glfw.GLFW;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import org.apache.http.util.Asserts;
-import org.lwjgl.glfw.GLFW;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * radius slider widget, with min/max/step support<p>
@@ -122,10 +123,10 @@ public class SliderWidget extends AbstractSliderButton {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		var moveFactor = 10 * (isKeyPressed(GLFW.GLFW_KEY_LEFT_SHIFT) ? 0.5 : 1);
-		trySetActualValue(actualValue + delta * stepSize * moveFactor);
-		return super.mouseScrolled(mouseX, mouseY, delta);
+		trySetActualValue(actualValue + scrollY * stepSize * moveFactor);
+		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
 	}
 
 	private static boolean isKeyPressed(int key) {

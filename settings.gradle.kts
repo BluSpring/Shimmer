@@ -8,13 +8,13 @@ pluginManagement {
     }
     plugins{
         id("architectury-plugin") version ("3.4-SNAPSHOT") apply false
-        id("dev.architectury.loom") version ("1.2-SNAPSHOT") apply false
-        id("com.github.johnrengelman.shadow").version("8.1.1").apply(false)
+        id("dev.architectury.loom") version ("1.11-SNAPSHOT") apply false
+        id("com.gradleup.shadow").version("9.4.1").apply(false)
     }
 }
 
 include("Common")
 include("Fabric")
-include("Forge")
+include("NeoForge")
 
 rootProject.name = "Shimmer"

@@ -1,5 +1,8 @@
 package com.lowdragmc.shimmer.client.auxiliaryScreen;
 
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.lowdragmc.shimmer.Configuration;
 import com.lowdragmc.shimmer.client.light.LightManager;
 import com.lowdragmc.shimmer.client.model.ShimmerMetadataSection;
@@ -8,6 +11,9 @@ import com.lowdragmc.shimmer.config.BlockLight;
 import com.lowdragmc.shimmer.config.Bloom;
 import com.lowdragmc.shimmer.config.ItemLight;
 import com.lowdragmc.shimmer.config.ShimmerConfig;
+import org.apache.commons.lang3.StringUtils;
+import org.lwjgl.glfw.GLFW;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -15,11 +21,6 @@ import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.apache.commons.lang3.StringUtils;
-import org.lwjgl.glfw.GLFW;
-
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AuxiliaryScreen extends Screen {
 
@@ -266,7 +267,7 @@ public class AuxiliaryScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		renderBackground(guiGraphics);
+		renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 	}
 

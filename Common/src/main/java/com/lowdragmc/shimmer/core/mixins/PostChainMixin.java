@@ -1,27 +1,32 @@
 package com.lowdragmc.shimmer.core.mixins;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.lowdragmc.shimmer.client.rendertarget.ProxyTarget;
 import com.lowdragmc.shimmer.client.rendertarget.ScaleTextureTarget;
 import com.lowdragmc.shimmer.client.rendertarget.SelectRenderTarget;
 import com.lowdragmc.shimmer.platform.Services;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.shaders.Uniform;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.PostChain;
-import net.minecraft.util.GsonHelper;
 import org.lwjgl.opengl.GL11;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.List;
-import java.util.Map;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.util.GsonHelper;
 
 /**
  * @author KilaBash
@@ -98,39 +103,39 @@ public abstract class PostChainMixin {
         }
     }
 
-    @Redirect(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(F)V"))
-    private void injectParseUniformNode(Uniform instance, float pX) {
+    @WrapOperation(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(F)V"))
+    private void injectParseUniformNode(Uniform instance, float pX, Operation<Void> original) {
         if (instance.getType() < 4) {
             instance.set((int)pX);
         } else {
-            instance.set(pX);
+            original.call(instance, pX);
         }
     }
 
-    @Redirect(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(FF)V"))
-    private void injectParseUniformNode2(Uniform instance, float pX, float pY) {
+    @WrapOperation(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(FF)V"))
+    private void injectParseUniformNode2(Uniform instance, float pX, float pY, Operation<Void> original) {
         if (instance.getType() < 4) {
             instance.set((int)pX, (int)pY);
         } else {
-            instance.set(pX, pY);
+            original.call(instance, pX, pY);
         }
     }
 
-    @Redirect(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(FFF)V"))
-    private void injectParseUniformNode3(Uniform instance, float pX, float pY, float pZ) {
+    @WrapOperation(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(FFF)V"))
+    private void injectParseUniformNode3(Uniform instance, float pX, float pY, float pZ, Operation<Void> original) {
         if (instance.getType() < 4) {
             instance.set((int)pX, (int)pY, (int)pZ);
         } else {
-            instance.set(pX, pY, pZ);
+            original.call(instance, pX, pY, pZ);
         }
     }
 
-    @Redirect(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(FFFF)V"))
-    private void injectParseUniformNode4(Uniform instance, float pX, float pY, float pZ, float pW) {
+    @WrapOperation(method = "parseUniformNode", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;set(FFFF)V"))
+    private void injectParseUniformNode4(Uniform instance, float pX, float pY, float pZ, float pW, Operation<Void> original) {
         if (instance.getType() < 4) {
             instance.set((int)pX, (int)pY, (int)pZ, (int)pW);
         } else {
-            instance.set(pX, pY, pZ, pW);
+            original.call(instance, pX, pY, pZ, pW);
         }
     }
 }

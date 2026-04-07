@@ -9,8 +9,6 @@ import net.fabricmc.api.ModInitializer;
 @SuppressWarnings("unused")
 public class ShimmerMod implements ModInitializer {
 
-    public static int postTextureId = -1;
-
     @Override
     public void onInitialize() {
     }

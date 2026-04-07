@@ -1,8 +1,17 @@
 package com.lowdragmc.shimmer.client.auxiliaryScreen;
 
+import java.util.Objects;
+
 import com.lowdragmc.shimmer.platform.Services;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import org.joml.Matrix4f;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -18,9 +27,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
-import org.joml.Matrix4f;
-
-import java.util.Objects;
 
 /**
  * the preview widget for block/fluid/particle
@@ -64,28 +70,26 @@ public class PreviewWidget extends AbstractWidget {
 				}
 				case BLOOM_PARTICLE -> {
 					TextureAtlas textureAtlas = Minecraft.getInstance().particleEngine.textureAtlas;
-					TextureAtlasSprite sprite = textureAtlas.getSprite(new ResourceLocation(resourceLocation.getNamespace(), "particle/" + resourceLocation.getPath()));
+					TextureAtlasSprite sprite = textureAtlas.getSprite(resourceLocation.withPrefix("particle/"));
 					if (Objects.equals(sprite.atlasLocation(), MissingTextureAtlasSprite.getLocation())) return;
 
 					Matrix4f pose = guiGraphics.pose().last().pose();
 					RenderSystem._setShaderTexture(0, TextureAtlas.LOCATION_PARTICLES);
 					RenderSystem.setShader(GameRenderer::getPositionTexShader);
-					BufferBuilder builder = Tesselator.getInstance().getBuilder();
-					builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+					BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 
-					builder.vertex(pose, getX(), getY(), 0.0f).uv(sprite.getU0(), sprite.getV1()).endVertex();
-					builder.vertex(pose, getX(), getY() + height, 0.0f).uv(sprite.getU0(), sprite.getV0()).endVertex();
-					builder.vertex(pose, getX() + width, getY() + height, 0.0f).uv(sprite.getU1(), sprite.getV0()).endVertex();
-					builder.vertex(pose, getX() + width, getY(), 0.0f).uv(sprite.getU1(), sprite.getV1()).endVertex();
+					builder.addVertex(pose, getX(), getY(), 0.0f).setUv(sprite.getU0(), sprite.getV1());
+					builder.addVertex(pose, getX(), getY() + height, 0.0f).setUv(sprite.getU0(), sprite.getV0());
+					builder.addVertex(pose, getX() + width, getY() + height, 0.0f).setUv(sprite.getU1(), sprite.getV0());
+					builder.addVertex(pose, getX() + width, getY(), 0.0f).setUv(sprite.getU1(), sprite.getV1());
 
-					BufferUploader.draw(builder.end());
+					BufferUploader.draw(builder.buildOrThrow());
 				}
 				case BLOOM_FLUID -> {
 					Matrix4f pose = guiGraphics.pose().last().pose();
 					RenderSystem._setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
 					RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-					BufferBuilder builder = Tesselator.getInstance().getBuilder();
-					builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+					BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
 					var atlas = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS);
 					Fluid fluid = BuiltInRegistries.FLUID.get(resourceLocation);
@@ -93,12 +97,12 @@ public class PreviewWidget extends AbstractWidget {
 					TextureAtlasSprite sprite = atlas.apply(Services.PLATFORM.getFluidTextureLocation(fluid, true));
 					int fluidColor = Services.PLATFORM.getFluidColor(fluid);
 
-					builder.vertex(pose, getX(), getY(), 0.0f).uv(sprite.getU0(), sprite.getV1()).color(fluidColor).endVertex();
-					builder.vertex(pose, getX(), getY() + height, 0.0f).uv(sprite.getU0(), sprite.getV0()).color(fluidColor).endVertex();
-					builder.vertex(pose, getX() + width, getY() + height, 0.0f).uv(sprite.getU1(), sprite.getV0()).color(fluidColor).endVertex();
-					builder.vertex(pose, getX() + width, getY(), 0.0f).uv(sprite.getU1(), sprite.getV1()).color(fluidColor).endVertex();
+					builder.addVertex(pose, getX(), getY(), 0.0f).setUv(sprite.getU0(), sprite.getV1()).setColor(fluidColor);
+					builder.addVertex(pose, getX(), getY() + height, 0.0f).setUv(sprite.getU0(), sprite.getV0()).setColor(fluidColor);
+					builder.addVertex(pose, getX() + width, getY() + height, 0.0f).setUv(sprite.getU1(), sprite.getV0()).setColor(fluidColor);
+					builder.addVertex(pose, getX() + width, getY(), 0.0f).setUv(sprite.getU1(), sprite.getV1()).setColor(fluidColor);
 
-					BufferUploader.draw(builder.end());
+					BufferUploader.draw(builder.buildOrThrow());
 				}
 			}
 		}

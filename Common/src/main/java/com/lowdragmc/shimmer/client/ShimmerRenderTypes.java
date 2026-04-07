@@ -1,18 +1,19 @@
 package com.lowdragmc.shimmer.client;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import com.lowdragmc.shimmer.ShimmerConstants;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.datafixers.util.Pair;
+
 import net.minecraft.Util;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-
-import java.io.IOException;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author KilaBash
@@ -27,7 +28,7 @@ public class ShimmerRenderTypes {
 
     public static Pair<ShaderInstance, Consumer<ShaderInstance>> registerShaders(ResourceManager resourceManager) {
         try {
-            return Pair.of(new ShaderInstance(resourceManager, new ResourceLocation(ShimmerConstants.MOD_ID, "rendertype_armor_cutout_no_cull").toString(), DefaultVertexFormat.NEW_ENTITY),
+            return Pair.of(new ShaderInstance(resourceManager, ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "rendertype_armor_cutout_no_cull").toString(), DefaultVertexFormat.NEW_ENTITY),
                     shaderInstance -> EmissiveArmorRenderType.emissiveArmorGlintShader = shaderInstance);
         } catch (IOException e) {
             throw new RuntimeException(e);

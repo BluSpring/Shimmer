@@ -1,14 +1,15 @@
 package com.lowdragmc.shimmer.event;
 
-import com.lowdragmc.shimmer.Configuration;
-import net.minecraft.resources.ResourceLocation;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import com.lowdragmc.shimmer.Configuration;
+
+import net.minecraft.resources.ResourceLocation;
+
 /**
  * called when shimmer reload configuration files<br>
- * for forge: subscriber ForgeShimmerLoadConfigEvent<br>
+ * for neoforge: subscriber ForgeShimmerLoadConfigEvent<br>
  * for fabric: use FabricShimmerLoadConfigCallback.EVENT#register
  */
 public class ShimmerLoadConfigEvent implements ShimmerEvent{

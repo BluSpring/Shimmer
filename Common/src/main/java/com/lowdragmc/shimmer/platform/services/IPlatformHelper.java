@@ -1,16 +1,17 @@
 package com.lowdragmc.shimmer.platform.services;
 
-import com.lowdragmc.shimmer.event.ShimmerLoadConfigEvent;
-import com.lowdragmc.shimmer.event.ShimmerReloadEvent;
+import java.nio.file.Path;
+import java.util.List;
+
 import com.lowdragmc.shimmer.client.postprocessing.PostParticle;
 import com.lowdragmc.shimmer.client.postprocessing.PostProcessing;
+import com.lowdragmc.shimmer.event.ShimmerLoadConfigEvent;
+import com.lowdragmc.shimmer.event.ShimmerReloadEvent;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+
 import net.minecraft.client.particle.Particle;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
-
-import java.nio.file.Path;
-import java.util.List;
 
 /**
  * @author HypherionSA
@@ -48,13 +49,13 @@ public interface IPlatformHelper {
     boolean isDevelopmentEnvironment();
 
     /**
-     * This is specific to forge, apparently.
+     * This is specific to neoforge, apparently.
      * @return - True or False on Forge, always false on Fabric
      */
     boolean isStencilEnabled(RenderTarget target);
 
     /**
-     * This is specific to forge, apparently.
+     * This is specific to neoforge, apparently.
      * @return - True or False on Forge, always false on Fabric
      */
     boolean useCombinedDepthStencilAttachment();

@@ -1,5 +1,5 @@
 plugins {
-    id("com.github.johnrengelman.shadow")
+    id("com.gradleup.shadow")
 }
 
 architectury {
@@ -28,26 +28,26 @@ dependencies {
     common(project(path = ":Common", configuration = "namedElements")) { isTransitive = false }
     shadowCommon(project(path = ":Common", configuration = "transformProductionFabric")) { isTransitive = false }
 
-    include(mixinExtras)
     modApi("me.shedaniel.cloth:cloth-config-fabric:$cloth_config_version")
     include("me.shedaniel.cloth:cloth-config-fabric:$cloth_config_version")
 
     // Sodium
-    modImplementation("maven.modrinth:sodium:mc1.20.1-0.5.3") {
+    modImplementation("maven.modrinth:sodium:mc1.21.1-0.6.13-fabric") {
         exclude(group = "net.fabricmc.fabric-api")
     }
 
-    modImplementation("maven.modrinth:iris:1.6.10+1.20.1") {
+    modImplementation("maven.modrinth:iris:1.8.8+1.21.1-fabric") {
         exclude(group = "net.fabricmc.fabric-api")
     }
 
-    modImplementation("com.jozufozu.flywheel:flywheel-fabric-$minecraft_version:$fabric_flywheel_version")
+    modImplementation("dev.engine-room.flywheel:flywheel-fabric-$minecraft_version:$fabric_flywheel_version")
 
     implementation("org.anarres:jcpp:1.4.14") {isTransitive = false}// for iris
     implementation("io.github.douira:glsl-transformer:2.0.0-pre13") // for iris
     implementation("org.antlr:antlr4-runtime:4.11.1") // for iris
 
     modImplementation("maven.modrinth:modmenu:$mod_menu_version")
+    include(implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.3.7-beta.1")!!)!!)
 
 }
 
@@ -85,8 +85,8 @@ tasks.sourcesJar {
 
 components.getByName<SoftwareComponent>("java") {
     (this as AdhocComponentWithVariants).apply {
-        withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
-            skip()
-        }
+//        withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
+//            skip()
+//        }
     }
 }

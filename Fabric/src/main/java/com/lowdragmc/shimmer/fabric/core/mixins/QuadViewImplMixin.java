@@ -1,11 +1,12 @@
 package com.lowdragmc.shimmer.fabric.core.mixins;
 
-import com.lowdragmc.shimmer.fabric.core.IQuadViewImpl;
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.QuadViewImpl;
+import com.lowdragmc.shimmer.core.IQuadViewImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.QuadViewImpl;
 
 /**
  * @author KilaBash

@@ -1,48 +1,36 @@
 package com.lowdragmc.shimmer.fabric.core.mixins;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
 import com.google.common.collect.Maps;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.lowdragmc.shimmer.client.postprocessing.IPostParticleType;
 import com.lowdragmc.shimmer.client.postprocessing.PostProcessing;
 import com.lowdragmc.shimmer.core.IParticleDescription;
 import com.lowdragmc.shimmer.core.IParticleEngine;
 import com.lowdragmc.shimmer.core.mixins.ShimmerMixinPlugin;
 import com.lowdragmc.shimmer.platform.Services;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleDescription;
 import net.minecraft.client.particle.ParticleEngine;
-import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * @author KilaBash
@@ -56,9 +44,6 @@ public abstract class ParticleEngineMixin implements IParticleEngine {
 
     @Shadow public abstract void add(Particle pEffect);
 
-    @Shadow @Final private Map<ParticleRenderType, Queue<Particle>> particles;
-
-    @Shadow @Final private Queue<Particle> particlesToAdd;
     private final Map<ResourceLocation, String> PARTICLE_EFFECT = Maps.newHashMap();
 
     @Nullable
@@ -75,7 +60,7 @@ public abstract class ParticleEngineMixin implements IParticleEngine {
 
     @Inject(method = "render",
             at = @At(value = "RETURN"))
-    private void injectRenderReturn(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, LightTexture lightTexture, Camera camera, float partialTicks, CallbackInfo ci) {
+    private void injectRenderReturn(LightTexture lightTexture, Camera camera, float partialTick, CallbackInfo ci) {
         for (PostProcessing postProcessing : PostProcessing.values()) {
             postProcessing.renderParticlePost();
         }

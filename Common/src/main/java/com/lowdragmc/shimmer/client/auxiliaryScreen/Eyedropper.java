@@ -1,6 +1,11 @@
 package com.lowdragmc.shimmer.client.auxiliaryScreen;
 
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Consumer;
+
 import com.lowdragmc.shimmer.ShimmerConstants;
 import com.lowdragmc.shimmer.ShimmerFields;
 import com.lowdragmc.shimmer.Utils;
@@ -12,8 +17,14 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.datafixers.util.Pair;
+import org.lwjgl.opengl.GL15;
+
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -22,12 +33,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FastColor;
-import org.lwjgl.opengl.GL15;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.function.Consumer;
 
 public enum Eyedropper {
 
@@ -67,14 +72,12 @@ public enum Eyedropper {
 				RenderSystem.defaultBlendFunc();
 
 				Tesselator tesselator = RenderSystem.renderThreadTesselator();
-				BufferBuilder bufferbuilder = tesselator.getBuilder();
-
-				bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-				bufferbuilder.vertex(-1, 1, 0).endVertex();
-				bufferbuilder.vertex(-1, -1, 0).endVertex();
-				bufferbuilder.vertex(1, -1, 0).endVertex();
-				bufferbuilder.vertex(1, 1, 0).endVertex();
-				BufferUploader.draw(bufferbuilder.end());
+				BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+				bufferbuilder.addVertex(-1, 1, 0);
+				bufferbuilder.addVertex(-1, -1, 0);
+				bufferbuilder.addVertex(1, -1, 0);
+				bufferbuilder.addVertex(1, 1, 0);
+				BufferUploader.draw(bufferbuilder.buildOrThrow());
 				colorPickShader.clear();
 
 				GlStateManager._depthMask(true);
@@ -298,7 +301,7 @@ public enum Eyedropper {
 	 */
 	public static Pair<ShaderInstance, Consumer<ShaderInstance>> registerShaders(ResourceManager resourceManager) {
 		try {
-			return Pair.of(new ShaderInstance(resourceManager, new ResourceLocation(ShimmerConstants.MOD_ID, "pick_color").toString(), DefaultVertexFormat.POSITION),
+			return Pair.of(new ShaderInstance(resourceManager, ResourceLocation.fromNamespaceAndPath(ShimmerConstants.MOD_ID, "pick_color").toString(), DefaultVertexFormat.POSITION),
 					Eyedropper.mode::setShader);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

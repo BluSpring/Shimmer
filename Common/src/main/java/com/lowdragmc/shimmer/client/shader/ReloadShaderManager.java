@@ -1,35 +1,49 @@
 package com.lowdragmc.shimmer.client.shader;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import org.apache.http.util.Asserts;
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EffectInstance;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.resources.*;
+import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.apache.http.util.Asserts;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class ReloadShaderManager {
 
@@ -112,7 +126,7 @@ public class ReloadShaderManager {
             return new ShaderInstance(reloadShaderResource, shaderName, vertexFormat);
         }
         ShaderInstance shaderInstance = new ShaderInstance(resourceProvider, shaderName, vertexFormat);
-        ResourceLocation shaderResourceLocation = new ResourceLocation(shaderName);
+        ResourceLocation shaderResourceLocation = ResourceLocation.parse(shaderName);
         recordProgramResource(resourceProvider, shaderResourceLocation.getNamespace(), shaderResourceLocation.getPath());
         return shaderInstance;
     }
@@ -122,15 +136,15 @@ public class ReloadShaderManager {
     }
 
     private static void recordProgramResource(ResourceProvider resourceProvider, String nameSpace, String shaderName) throws IOException {
-        ResourceLocation programResourceLocation = new ResourceLocation(nameSpace, "shaders/core/" + shaderName + ".json");
+        ResourceLocation programResourceLocation = ResourceLocation.fromNamespaceAndPath(nameSpace, "shaders/core/" + shaderName + ".json");
         Resource programResource = resourceProvider.getResource(programResourceLocation).orElseThrow();
         ReloadShaderManager.recordCopyResource(programResourceLocation, programResource);
         JsonObject jsonObject = GsonHelper.parse(new InputStreamReader(resourceProvider.getResource(programResourceLocation).orElseThrow().open(), StandardCharsets.UTF_8));
-        ResourceLocation vertex = new ResourceLocation(GsonHelper.getAsString(jsonObject, "vertex"));
-        ResourceLocation vertexResourceLocation = new ResourceLocation(vertex.getNamespace(), "shaders/core/" + vertex.getPath() + ".vsh");
+        ResourceLocation vertex = ResourceLocation.parse(GsonHelper.getAsString(jsonObject, "vertex"));
+        ResourceLocation vertexResourceLocation = ResourceLocation.fromNamespaceAndPath(vertex.getNamespace(), "shaders/core/" + vertex.getPath() + ".vsh");
         ReloadShaderManager.recordCopyResource(vertexResourceLocation, resourceProvider.getResource(vertexResourceLocation).orElseThrow());
-        ResourceLocation fragment = new ResourceLocation(GsonHelper.getAsString(jsonObject, "fragment"));
-        ResourceLocation fragmentResourceLocation = new ResourceLocation(fragment.getNamespace(), "shaders/core/" + fragment.getPath() + ".fsh");
+        ResourceLocation fragment = ResourceLocation.parse(GsonHelper.getAsString(jsonObject, "fragment"));
+        ResourceLocation fragmentResourceLocation = ResourceLocation.fromNamespaceAndPath(fragment.getNamespace(), "shaders/core/" + fragment.getPath() + ".fsh");
         ReloadShaderManager.recordCopyResource(fragmentResourceLocation, resourceProvider.getResource(fragmentResourceLocation).orElseThrow());
     }
 
@@ -185,7 +199,7 @@ public class ReloadShaderManager {
         }
     };
 
-    public static PostChain backupNewPostChain(TextureManager textureManager, ResourceManager resourceManager, RenderTarget renderTarget, ResourceLocation resourceLocation) throws IOException {
+    public static PostChain backupNewPostChain(TextureManager textureManager, ResourceProvider resourceManager, RenderTarget renderTarget, ResourceLocation resourceLocation) throws IOException {
         if (foreReloadAll) {
             return new PostChain(textureManager, reloadResourceManager, renderTarget, resourceLocation);
         }
@@ -194,12 +208,12 @@ public class ReloadShaderManager {
         return postChain;
     }
 
-    private static void recordPostChainResource(ResourceManager resourceManager, ResourceLocation resourceLocation) throws IOException {
+    private static void recordPostChainResource(ResourceProvider resourceManager, ResourceLocation resourceLocation) throws IOException {
         Resource postChainResource = resourceManager.getResource(resourceLocation).orElseThrow();
         recordCopyResource(resourceLocation, postChainResource);
     }
 
-    public static EffectInstance backupNewEffectInstance(ResourceManager resourceProvider, String shaderName) throws IOException {
+    public static EffectInstance backupNewEffectInstance(ResourceProvider resourceProvider, String shaderName) throws IOException {
         if (foreReloadAll) {
             return new EffectInstance(reloadResourceManager, shaderName);
         }
@@ -208,19 +222,19 @@ public class ReloadShaderManager {
         return effectInstance;
     }
 
-    private static void recordEffectInstanceResource(ResourceManager resourceProvider, String shaderName) throws IOException {
+    private static void recordEffectInstanceResource(ResourceProvider resourceProvider, String shaderName) throws IOException {
         ResourceLocation resourceLocation = make(ResourceLocation.tryParse(shaderName), (rl) ->
-                new ResourceLocation(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".json"));
+                ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".json"));
         Resource effectResource = resourceProvider.getResource(resourceLocation).orElseThrow();
         recordCopyResource(resourceLocation, effectResource);
         JsonObject effectJsonObject = GsonHelper.parse(new InputStreamReader(resourceProvider.getResource(resourceLocation).orElseThrow().open(), StandardCharsets.UTF_8));
         String vertex = GsonHelper.getAsString(effectJsonObject, "vertex");
         ResourceLocation vertexResourceLocation = make(ResourceLocation.tryParse(vertex), rl ->
-                new ResourceLocation(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".vsh"));
+                ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".vsh"));
         recordCopyResource(vertexResourceLocation, resourceProvider.getResource(vertexResourceLocation).orElseThrow());
         String fragment = GsonHelper.getAsString(effectJsonObject, "fragment");
         ResourceLocation fragmentResourceLocation = make(ResourceLocation.tryParse(fragment), rl ->
-                new ResourceLocation(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".fsh"));
+                ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".fsh"));
         recordCopyResource(fragmentResourceLocation, resourceProvider.getResource(fragmentResourceLocation).orElseThrow());
     }
 
