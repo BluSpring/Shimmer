@@ -14,6 +14,7 @@ import java.util.function.Function;
 import com.google.common.collect.Maps;
 import com.lowdragmc.shimmer.Configuration;
 import com.lowdragmc.shimmer.FileUtility;
+import com.lowdragmc.shimmer.ShimmerComponents;
 import com.lowdragmc.shimmer.ShimmerConstants;
 import com.lowdragmc.shimmer.Utils;
 import com.lowdragmc.shimmer.client.shader.RenderUtils;
@@ -544,6 +545,11 @@ public enum LightManager {
 
     @Nullable
     public ColorPointLight getItemLight(@NotNull ItemStack itemStack, Vec3 pos){
+        if (itemStack.has(ShimmerComponents.LIGHT)) {
+            var component = itemStack.get(ShimmerComponents.LIGHT);
+            return new ColorPointLight(this, pos.toVector3f(), component.color(), component.radius(), 0, false);
+        }
+
         Function<ItemStack,ColorPointLight.Template> function = ITEM_MAP.get(itemStack.getItem());
         if (function == null) {
             var optional= itemStack.getTags().filter(tag -> TAG_MAP.containsKey(tag.location())).findAny();

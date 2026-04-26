@@ -19,7 +19,7 @@
     "license": "MIT",
     "icon": "assets/shimmer/icon.png",
 
-    "environment": "client",
+    "environment": "*",
     "entrypoints": {
       "main": [
 				"com.lowdragmc.shimmer.fabric.ShimmerMod"

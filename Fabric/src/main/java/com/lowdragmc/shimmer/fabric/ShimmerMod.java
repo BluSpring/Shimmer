@@ -1,5 +1,7 @@
 package com.lowdragmc.shimmer.fabric;
 
+import com.lowdragmc.shimmer.ShimmerComponents;
+
 import net.fabricmc.api.ModInitializer;
 
 /**
@@ -11,5 +13,6 @@ public class ShimmerMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ShimmerComponents.init();
     }
 }
