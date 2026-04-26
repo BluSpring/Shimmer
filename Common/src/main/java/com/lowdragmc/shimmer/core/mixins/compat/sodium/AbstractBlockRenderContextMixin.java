@@ -21,7 +21,7 @@ import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
  * @date 2022/05/31
  * @implNote ModelBlockRendererMixin, reglowstone.pngcode uv2 for bloom info
  */
-@Mixin(value = AbstractBlockRenderContext.class, remap = false)
+@Mixin(value = AbstractBlockRenderContext.class)
 public abstract class AbstractBlockRenderContextMixin {
 
     @Shadow

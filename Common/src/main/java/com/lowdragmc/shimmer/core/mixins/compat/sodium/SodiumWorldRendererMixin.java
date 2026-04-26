@@ -26,7 +26,7 @@ public abstract class SodiumWorldRendererMixin {
 
     @Shadow(remap = false) private RenderSectionManager renderSectionManager;
 
-    @Inject(method = "setupTerrain", at = @At(value = "HEAD"), remap = false)
+    @Inject(method = "setupTerrain", at = @At(value = "HEAD"))
     private void injectCompilePre(Camera camera, Viewport viewport, boolean spectator, boolean updateChunksImmediately, CallbackInfo ci) {
         Vec3 position = camera.getPosition();
         int blockLightSize = 0;
